@@ -11,9 +11,10 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AuthenticationResponse {
-    private String username;
-    private String authToken;
-    private String refreshToken;
-    private Instant expiredAt;
+public class CommentDto {
+    private Long id;
+    private String text;
+    private Long postId;
+    private String userName;
+    private Instant createdDate;
 }

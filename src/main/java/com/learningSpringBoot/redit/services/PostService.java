@@ -39,7 +39,7 @@ public class PostService {
         Subreddit subreddit = subredditRepository.findByName(postDto.getSubredditName()).orElseThrow(
                 ()->new SubredditNotFoundException("Can't find a subreddit with the given name")
         );
-        User user = authService.getCurentUser();
+        User user = authService.getCurrentUser();
         postRepository.save(postMapper.mapDtoToPost(postDto,subreddit,user));
     }
 

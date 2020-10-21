@@ -1,9 +1,6 @@
 package com.learningSpringBoot.redit.services;
 
-import com.learningSpringBoot.redit.dtos.AuthenticationResponse;
-import com.learningSpringBoot.redit.dtos.LogingRequest;
-import com.learningSpringBoot.redit.dtos.NotificationEmail;
-import com.learningSpringBoot.redit.dtos.RegisterRequest;
+import com.learningSpringBoot.redit.dtos.*;
 import com.learningSpringBoot.redit.exceptions.SpringRedditException;
 import com.learningSpringBoot.redit.models.User;
 import com.learningSpringBoot.redit.models.VerificationToken;
@@ -11,11 +8,9 @@ import com.learningSpringBoot.redit.repositories.UserRepository;
 import com.learningSpringBoot.redit.repositories.VerificationTokenRepository;
 import com.learningSpringBoot.redit.security.JwtProvider;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,6 +30,7 @@ public class AuthService {
     private final MailService mailService;
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public void signup(RegisterRequest registerRequest){
@@ -84,13 +80,29 @@ public class AuthService {
         ));
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = jwtProvider.generateToken(authentication);
-        return new AuthenticationResponse(logingRequest.getUsername(),token);
+        return AuthenticationResponse.builder()
+                .username(logingRequest.getUsername())
+                .authToken(token)
+                .refreshToken(refreshTokenService.generateRefreshToken().getToken())
+                .expiredAt(Instant.now().plusMillis(jwtProvider.getJwtExpirationInMillis()))
+                .build();
     }
 
-    public User getCurentUser() {
+    public User getCurrentUser() {
         UserDetails user = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return userRepository.findByUsername(user.getUsername()).orElseThrow(
                 ()->new SpringRedditException("User not found with username = "+user.getUsername())
         );
+    }
+
+    public AuthenticationResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
+        refreshTokenService.validateRefreshToken(refreshTokenRequest.getRefreshToken());
+        String token = jwtProvider.generateTokenByUsername(refreshTokenRequest.getUsername());
+        return AuthenticationResponse.builder()
+                .refreshToken(refreshTokenRequest.getRefreshToken())
+                .authToken(token)
+                .username(refreshTokenRequest.getUsername())
+                .expiredAt(Instant.now().plusMillis(jwtProvider.getJwtExpirationInMillis()))
+                .build();
     }
 }

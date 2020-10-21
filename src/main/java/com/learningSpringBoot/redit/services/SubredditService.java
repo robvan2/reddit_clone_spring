@@ -18,11 +18,12 @@ public class SubredditService {
 
     private final SubRedditRepository subRedditRepository;
     private final SubredditMapper subRedditMapper;
+    private final AuthService authService;
 
     @Transactional
     public SubredditDto save(SubredditDto subRedditDto){
         Subreddit subReddit = subRedditRepository.save(
-                subRedditMapper.mapDtoToSubreddit(subRedditDto)
+                subRedditMapper.mapDtoToSubreddit(subRedditDto,authService.getCurrentUser())
         );
         subRedditDto.setId(subReddit.getId());
         return subRedditDto;
