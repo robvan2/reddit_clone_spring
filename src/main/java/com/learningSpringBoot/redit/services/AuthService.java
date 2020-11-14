@@ -78,14 +78,17 @@ public class AuthService {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                 logingRequest.getUsername(),logingRequest.getPassword()
         ));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String token = jwtProvider.generateToken(authentication);
-        return AuthenticationResponse.builder()
-                .username(logingRequest.getUsername())
-                .authToken(token)
-                .refreshToken(refreshTokenService.generateRefreshToken().getToken())
-                .expiredAt(Instant.now().plusMillis(jwtProvider.getJwtExpirationInMillis()))
-                .build();
+        if (authentication.isAuthenticated()){
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String token = jwtProvider.generateToken(authentication);
+            return AuthenticationResponse.builder()
+                    .username(logingRequest.getUsername())
+                    .authToken(token)
+                    .refreshToken(refreshTokenService.generateRefreshToken().getToken())
+                    .expiredAt(Instant.now().plusMillis(jwtProvider.getJwtExpirationInMillis()))
+                    .build();
+        }
+        return null;
     }
 
     public User getCurrentUser() {

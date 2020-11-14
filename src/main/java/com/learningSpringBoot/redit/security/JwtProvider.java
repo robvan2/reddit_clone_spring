@@ -59,7 +59,11 @@ public class JwtProvider {
     }
 
     public boolean valideToken(String jwt){
-        parser.parseClaimsJws(jwt);
+        try{
+            parser.parseClaimsJws(jwt);
+        }catch (Exception e){
+            return false;
+        }
         return true;
     }
 

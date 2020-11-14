@@ -30,22 +30,23 @@ public class CommentService {
     private final UserRepository userRepository;
     private final MailService mailService;
 
-    public void createComment(CommentDto commentDto) {
+    public CommentDto createComment(CommentDto commentDto) {
         User user = authService.getCurrentUser();
         Post post = postRepository.findById(commentDto.getPostId()).orElseThrow(
                 ()-> new PostNotFoundException("Couldnt find post while adding comment postId = " +
                         commentDto.getPostId().toString())
         );
         Comment comment = commentMapper.mapDtoToComment(commentDto,user,post);
-        commentRepository.save(comment);
+        CommentDto dto = commentMapper.mapToDto(commentRepository.save(comment));
 
-        post.setVoteCount(post.getVoteCount()+1);
         postRepository.save(post);
 
         if (!comment.getUser().getUsername().equals(post.getUser().getUsername())) {
             String message = comment.getUser().getUsername() + " has commented on your post : " + post.getUrl();
             sendCommentEmail(message, post.getUser(), comment.getUser().getUsername());
         }
+
+        return dto;
     }
 
     private void sendCommentEmail(String message, User recipient, String username) {

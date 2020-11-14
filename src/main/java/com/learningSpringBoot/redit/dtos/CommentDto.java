@@ -16,5 +16,5 @@ public class CommentDto {
     private String text;
     private Long postId;
     private String userName;
-    private Instant createdDate;
+    private String createdDate;
 }
